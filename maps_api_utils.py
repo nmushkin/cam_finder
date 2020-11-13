@@ -8,7 +8,7 @@ PANO_BASE_URL = 'https://www.google.com/maps/@?api=1&map_action=pano'
 
 def pano_exists(lat, lon, heading, pitch=0):
     req_params = {
-        'size': '600x300',
+        'size': '300x300',
         'location': ','.join([str(lat), str(lon)]),
         'fov': 90,
         'heading': heading,

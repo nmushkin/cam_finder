@@ -8,10 +8,8 @@ from PIL import Image
 from osmnx_traverse import OsmnxTraverser
 from maps_api_utils import get_pano_url
 
-SAVE_PATH = './walk_pics'
 
-
-class GraphCamFinder():
+class GraphImageCrawler():
 
     def __init__(self, save_path):
         self.driver = webdriver.Chrome()
@@ -38,11 +36,14 @@ class GraphCamFinder():
             url = get_viewpoint(lat, lon, heading)
             if url:
                 self.driver.get(url)
-                sleep(2)
+                # Wait for page to load fully (url changes on full load)
+                while self.driver.current_url == url:
+                    sleep(.01)
                 screenshot = BytesIO(self.driver.get_screenshot_as_png())
                 screenshot = Image.open(screenshot).convert('RGB')
                 screenshot.save(fp=fp)
-            sleep(.2)
+            else:
+                sleep(.1)
 
         return save
 

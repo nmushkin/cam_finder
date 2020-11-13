@@ -1,12 +1,11 @@
 import os
 from collections import deque
-from math import floor, cos, sin, atan2, pi, log, tan
+from math import floor
 
 import osmnx as ox
-import matplotlib.pyplot as plt
 
 
-GRAPH_DIR = '.data/osmnx_graphs/'
+GRAPH_DIR = './data/osmnx_graphs/'
 
 
 class OsmnxTraverser():
@@ -48,7 +47,8 @@ class OsmnxTraverser():
 
         while(discovered):
             if len(visited) % 20 == 0:
-                print(f'{round(len(visited) / len(self.G.nodes) * 100)}%')
+                print(f'{round(len(visited) / len(self.G.nodes) * 100)}%',
+                      end=' ')
             node_num = discovered.pop()
             bfs_visit(self.G,
                       node_num,

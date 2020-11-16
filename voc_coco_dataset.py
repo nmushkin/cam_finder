@@ -33,13 +33,16 @@ class VocXmlDataset(Dataset):
                 self.width,
                 boxes[box]
                 )
+        areas = []
+        for box in boxes:
+            areas.append((box[2] - box[0]) * (box[3] - box[1]))
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         image = image.resize((self.width, self.height))
         labels = torch.as_tensor(
             [self.class_names[c] for c in sample['labels']],
             dtype=torch.int64)
         image_id = torch.as_tensor([idx], dtype=torch.int64)
-        areas = torch.as_tensor(sample['areas'], dtype=torch.float32)
+        areas = torch.as_tensor(areas, dtype=torch.float32)
         is_crowd = torch.zeros((len(sample['boxes']),), dtype=torch.int64)
 
         target = {}
@@ -65,7 +68,6 @@ def voc_xml_to_dict(xml_path):
     image_name = root.find('filename').text
     labels = []
     boxes = []
-    areas = []
 
     for obj in root.findall('object'):
         labels.append(obj.find('name').text)
@@ -77,13 +79,11 @@ def voc_xml_to_dict(xml_path):
             float(bbox.find('ymax').text)
         ]
         boxes.append(bounds)
-        areas.append((bounds[2] - bounds[0]) * (bounds[3] - bounds[1]))
 
     return {
         'image': image_name,
         'labels': labels,
         'boxes': boxes,
-        'areas': areas
     }
 
 

@@ -57,6 +57,7 @@ class OsmnxTraverser():
                       node_callback,
                       taken_edges,
                       distance)
+        print('Done Searching')
 
     def dfs_walk(self, distance, node_callback):
         """Performs a dfs walk on the graph, calling callback along the way"""

@@ -7,6 +7,7 @@ from PIL import Image
 
 
 class VocXmlDataset(Dataset):
+    """A Pytorch Dataset for using images and annotations in VOC format"""
 
     def __init__(self, image_dir, xml_dir, class_names, im_size, transforms=None):
         self.image_dir = image_dir
@@ -63,6 +64,7 @@ class VocXmlDataset(Dataset):
 
 def voc_xml_to_dict(xml_path):
     """Parses voc-format xml file, like those made by labelImg"""
+
     xml = etree.parse(xml_path)
     root = xml.getroot()
     image_name = root.find('filename').text
@@ -88,6 +90,8 @@ def voc_xml_to_dict(xml_path):
 
 
 def resize_bbox(h1, h2, w1, w2, bbox):
+    """Resizes a bounding box given old and new image dimensions"""
+
     hr = h2 / h1
     wr = w2 / w1
     x1, x2 = bbox[0] * wr, bbox[2] * wr

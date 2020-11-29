@@ -144,7 +144,7 @@ def stops(edge_info, from_node, to_node, min_distance, first_only=False):
 def stops_between(n_stops, lat_1, lon_1, lat_2, lon_2, include_start=True):
     """Returns n_stops points linearly between two points"""
 
-    bearing = bearing_between(lat_1, lon_1, lat_2, lon_2)
+    bearing = ox.bearing.get_bearing((lat_1, lon_1), (lat_2, lon_2))
     lat_dist = (lat_2 - lat_1) / (n_stops + 1)
     lon_dist = (lon_2 - lon_1) / (n_stops + 1)
     stops = []
@@ -158,6 +158,7 @@ def stops_between(n_stops, lat_1, lon_1, lat_2, lon_2, include_start=True):
 
 def line_string_great_circle(line_string):
     """Calculate the great-circle distance of a LineString of (lon, lat)"""
+
     coords = list(line_string.coords)
     distance = 0
     for coord in range(1, len(coords)):
@@ -193,7 +194,3 @@ def string_stops(line_string, true_length, min_distance, first_only=False):
     if not stops:
         stops = stops_between(0, lat_1, lon_1, lat_2, lon_2)
     return stops
-
-
-def bearing_between(lat1, lon1, lat2, lon2):
-    return ox.bearing.get_bearing((lat1, lon1), (lat2, lon2))

@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from osmnx_traverse import OsmnxTraverser
 from street_crawler import GraphImageCrawler
 
+# Seattle: [47.597749, 47.620674, -122.358281, -122.322321]
+# London: [51.505334, 51.519731, -0.129035, -0.09625]
+
 
 # BFS Traversal Visualization Demo:
 
@@ -40,9 +43,9 @@ from street_crawler import GraphImageCrawler
 
 # Image Save Demo:
 
-SAVE_PATH = './data/walk_pics'
+SAVE_PATH = './data/walk_test'
 
 grapher = GraphImageCrawler(save_path=SAVE_PATH)
 grapher.traverse_image_save(
-    bbox=[47.597749, 47.620674, -122.358281, -122.322321]
+    bbox=[51.505334, 51.519731, -0.129035, -0.09625]
 )

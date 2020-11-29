@@ -7,6 +7,8 @@ PANO_BASE_URL = 'https://www.google.com/maps/@?api=1&map_action=pano'
 
 
 def pano_exists(lat, lon, heading, pitch=0):
+    """Uses the google streetview api to check if a pano exists"""
+
     req_params = {
         'size': '300x300',
         'location': ','.join([str(lat), str(lon)]),
@@ -20,16 +22,9 @@ def pano_exists(lat, lon, heading, pitch=0):
     return response.get('status', '') == 'OK'
 
 
-def get_pano_url():
-    prev_panos = set()
+def get_pano_url(lat, lon, heading):
+    """Returns a street view url for the specified location"""
 
-    def get_viewpoint(lat, lon, heading):
-        if not pano_exists(lat, lon, heading):
-            return
-        hash_string = f'{lat}_{lon}_{heading}'
-        if hash_string in prev_panos:
-            return
-        prev_panos.add(hash_string)
-        return f'{PANO_BASE_URL}&viewpoint={lat},{lon}&heading={heading}&pitch=0&fov=90'
-
-    return get_viewpoint
+    if not pano_exists(lat, lon, heading):
+        return
+    return f'{PANO_BASE_URL}&viewpoint={lat},{lon}&heading={heading}&pitch=0&fov=90'

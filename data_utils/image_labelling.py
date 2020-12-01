@@ -27,7 +27,26 @@ def png_to_jpeg(xml_label_folder, image_folder):
             xml.write(xml_path)
 
 
+def delete_unused_images(xml_dir, im_dir):
+    photo_list = set(os.listdir(im_dir))
+    xml_list = set(os.listdir(xml_dir))
+    for f in photo_list:
+        if 'jp' in f:
+            prefix = f[:f.index('.jp')]
+        elif 'png' in f:
+            prefix = f[:f.index('.png')]
+        xml_file = f'{prefix}.xml'
+        if xml_file not in xml_list:
+            print(f)
+            os.remove(os.path.join(im_dir, f))
+
+
 # png_to_jpeg(
 #     '/Users/noahmushkin/codes/cam_finder/data/new_cameras_labels',
 #     '/Users/noahmushkin/codes/cam_finder/data/images/new_cameras'
 # )
+
+delete_unused_images(
+    '/Users/noahmushkin/codes/cam_finder/data/new_cameras_labels',
+    '/Users/noahmushkin/codes/cam_finder/data/images/new_cameras'
+)

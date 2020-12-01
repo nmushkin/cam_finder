@@ -6,7 +6,7 @@ import PIL
 from PIL import ImageDraw
 import torchvision
 
-from detection_models import get_fasterrcnn_model
+from detection_models import get_fasterrcnn_model, set_grad_required
 from voc_coco_dataset import VocXmlDataset
 import torchvision_scripts.transforms as T
 from torchvision_scripts import utils
@@ -16,11 +16,9 @@ IMAGE_DIR = './data/images/new_cameras/'
 LABEL_DIR = './data/new_cameras_labels/'
 
 
-def train_model(class_names, feature_extract_only=True, epochs=10):
+def train_model(class_names, model, feature_extract_only=True, epochs=10):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    # Not including background - model adds that
-    num_classes = len(class_names)
     # use our dataset and defined transformations
     dataset = VocXmlDataset(
         IMAGE_DIR, LABEL_DIR, class_names, (600, 600), get_transform(train=True)
@@ -46,8 +44,6 @@ def train_model(class_names, feature_extract_only=True, epochs=10):
         dataset_test, batch_size=1, shuffle=False, num_workers=4,
         collate_fn=utils.collate_fn)
 
-    # get the model using our helper function
-    model = get_fasterrcnn_model(num_classes, feature_extract_only)
     # move model to the right device
     model.to(device)
     # construct an optimizer
@@ -107,14 +103,20 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-def draw_bbox(img, bbox, prob):
+def draw_bbox(img, bbox, text):
     draw = ImageDraw.Draw(img)
     draw.rectangle(bbox, outline=(3, 252, 57))
-    draw.text(xy=bbox[0:2], text=str(int(prob*100)))
+    draw.text(xy=bbox[0:2], text=str(int(text*100)))
     return img
 
 
 if __name__ == "__main__":
     classes = ['fixed_cam', 'round_cam']
-    model = train_model(epochs=10, class_names=classes)
+    num_classes = len(classes)
+    print('Feature Extracting')
+    model = get_fasterrcnn_model(num_classes, True)
+    model = train_model(epochs=5, class_names=classes, model=model)
+    print('Training On All Params')
+    set_grad_required(model, True)
+    model = train_model(epochs=20, class_names=classes, model=model)
     torch.save(model.state_dict(), './data/models/resnet_50.pth')

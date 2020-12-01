@@ -67,7 +67,6 @@ def _get_iou_types(model):
     return iou_types
 
 
-@torch.no_grad()
 def evaluate(model, data_loader, device):
     cpu_device = torch.device("cpu")
     model.eval()
@@ -78,7 +77,7 @@ def evaluate(model, data_loader, device):
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
-    for image, targets in metric_logger.log_every(data_loader, 100, header):
+    for image, targets in metric_logger.log_every(data_loader, 10, header):
         image = list(img.to(device) for img in image)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 

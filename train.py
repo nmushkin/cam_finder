@@ -37,7 +37,7 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=5, shuffle=True, num_workers=4,
+        dataset, batch_size=2, shuffle=True, num_workers=4,
         collate_fn=utils.collate_fn)
 
     data_loader_test = torch.utils.data.DataLoader(
@@ -48,16 +48,16 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     model.to(device)
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    print(params)
+    print(f'{len(params)} Params To Train')
     optimizer = torch.optim.SGD(params, lr=0.005,
                                 momentum=0.9, weight_decay=0.0005)
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=3,
+                                                   step_size=2,
                                                    gamma=0.1)
 
     for epoch in range(epochs):
-        # train for one epoch, printing every 10 iterations
+        # train for one epoch
         train_one_epoch(model, optimizer, data_loader, device, epoch)
         # update the learning rate
         lr_scheduler.step()
@@ -71,10 +71,11 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
     model.train()
     print(f'Epoch {epoch}')
-
+    total_loss = 0
+    num_batches = len(data_loader)
     for batch, (images, targets) in enumerate(data_loader):
-        if batch % 5 == 0:
-            percent = round(batch / len(data_loader) * 100)
+        if batch % 10 == 0:
+            percent = round(batch / num_batches * 100)
             print(f'{percent}%', end=' ', flush=True)
         # im = torchvision.transforms.ToPILImage()(images[0])
         # box = targets[0]['boxes'][0].tolist()
@@ -84,6 +85,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
 
         loss_dict = model(images, targets)
         losses = sum(loss for loss in loss_dict.values())
+        total_loss += losses.item()
 
         if not isfinite(losses):
             print(f'Loss is {losses}, stopping training')
@@ -93,6 +95,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         optimizer.zero_grad()
         losses.backward()
         optimizer.step()
+
+    print(f'Total Loss: {total_loss / num_batches}')
 
 
 def get_transform(train):
@@ -113,10 +117,10 @@ def draw_bbox(img, bbox, text):
 if __name__ == "__main__":
     classes = ['fixed_cam', 'round_cam']
     num_classes = len(classes)
-    print('Feature Extracting')
-    model = get_fasterrcnn_model(num_classes, True)
-    model = train_model(epochs=5, class_names=classes, model=model)
+    # print('Feature Extracting')
+    model = get_fasterrcnn_model(num_classes, False)
+    # model = train_model(epochs=5, class_names=classes, model=model)
     print('Training On All Params')
     set_grad_required(model, True)
     model = train_model(epochs=20, class_names=classes, model=model)
-    torch.save(model.state_dict(), './data/models/resnet_50.pth')
+    torch.save(model.state_dict(), './data/models/resnet_50_1500_20e_nofeature.pth')

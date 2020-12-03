@@ -5,6 +5,8 @@ from street_crawler import GraphImageCrawler
 
 # Seattle: [47.597749, 47.620674, -122.358281, -122.322321]
 # London: [51.505334, 51.519731, -0.129035, -0.09625]
+# Manhattan: [51.505334, 51.519731, -0.129035, -0.09625]
+# Upper east side: [40.77611, 40.790277, -73.966121, -73.944307]
 
 
 # BFS Traversal Visualization Demo:
@@ -47,5 +49,5 @@ SAVE_PATH = './data/walk_test'
 
 grapher = GraphImageCrawler(save_path=SAVE_PATH)
 grapher.traverse_image_save(
-    bbox=[51.505334, 51.519731, -0.129035, -0.09625]
+    bbox=[40.77611, 40.790277, -73.966121, -73.944307]
 )

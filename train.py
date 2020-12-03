@@ -123,4 +123,4 @@ if __name__ == "__main__":
     print('Training On All Params')
     set_grad_required(model, True)
     model = train_model(epochs=20, class_names=classes, model=model)
-    torch.save(model.state_dict(), './data/models/resnet_50_1500_20e_nofeature.pth')
+    torch.save(model.state_dict(), './data/resnet_50_1500_20e_nofeature.pth')

@@ -54,7 +54,7 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                    step_size=2,
-                                                   gamma=0.1)
+                                                   gamma=0.05)
 
     for epoch in range(epochs):
         # train for one epoch
@@ -69,17 +69,19 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
-    model.train()
     print(f'Epoch {epoch}')
+    model.train()
+    lowest_loss = None
+    last_percent = -1
     total_loss = 0
     num_batches = len(data_loader)
+
     for batch, (images, targets) in enumerate(data_loader):
-        if batch % 10 == 0:
-            percent = round(batch / num_batches * 100)
+        percent = round(batch / num_batches * 100)
+        if percent != last_percent:
             print(f'{percent}%', end=' ', flush=True)
-        # im = torchvision.transforms.ToPILImage()(images[0])
-        # box = targets[0]['boxes'][0].tolist()
-        # draw_bbox(im, box, 0.1).show()
+            last_percent = percent
+
         images = list(image.to(device) for image in images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
@@ -96,7 +98,14 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         losses.backward()
         optimizer.step()
 
-    print(f'Total Loss: {total_loss / num_batches}')
+    total_loss = total_loss / num_batches
+    print(f'Total Loss: {total_loss}')
+
+    if lowest_loss is None or total_loss < lowest_loss:
+        model.cpu()
+        torch.save(model.state_dict(), './data/resnet_50_1500_nofeature.pth')
+        model.to(device)
+        lowest_loss = total_loss
 
 
 def get_transform(train):
@@ -122,5 +131,6 @@ if __name__ == "__main__":
     # model = train_model(epochs=5, class_names=classes, model=model)
     print('Training On All Params')
     set_grad_required(model, True)
+    # train_model saves best epoch weights
     model = train_model(epochs=20, class_names=classes, model=model)
-    torch.save(model.state_dict(), './data/resnet_50_1500_20e_nofeature.pth')
+    # torch.save(model.state_dict(), './data/resnet_50_1500_20e_nofeature.pth')

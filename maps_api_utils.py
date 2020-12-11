@@ -6,7 +6,7 @@ METADATA_BASE_URL = 'https://maps.googleapis.com/maps/api/streetview/metadata'
 PANO_BASE_URL = 'https://www.google.com/maps/@?api=1&map_action=pano'
 
 
-def pano_exists(lat, lon, heading, pitch=0):
+def pano_exists(lat, lon, heading, pitch=0, session=None):
     """Uses the google streetview api to check if a pano exists"""
 
     req_params = {
@@ -17,14 +17,17 @@ def pano_exists(lat, lon, heading, pitch=0):
         'pitch': pitch,
         'key': MAPS_API_KEY,
     }
-    req = requests.get(url=METADATA_BASE_URL, params=req_params)
+    if session is None:
+        req = requests.get(url=METADATA_BASE_URL, params=req_params)
+    else:
+        req = session.get(url=METADATA_BASE_URL, params=req_params)
     response = req.json()
     return response.get('status', '') == 'OK'
 
 
-def get_pano_url(lat, lon, heading):
+def get_pano_url(lat, lon, heading, session):
     """Returns a street view url for the specified location"""
 
-    if not pano_exists(lat, lon, heading):
+    if not pano_exists(lat, lon, heading, session):
         return
     return f'{PANO_BASE_URL}&viewpoint={lat},{lon}&heading={heading}&pitch=0&fov=90'

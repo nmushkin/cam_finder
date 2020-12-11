@@ -47,6 +47,6 @@ def delete_unused_images(xml_dir, im_dir):
 # )
 
 delete_unused_images(
-    '/Users/noahmushkin/codes/cam_finder/data/new_cameras_labels',
-    '/Users/noahmushkin/codes/cam_finder/data/images/new_cameras'
+    '/Users/noahmushkin/codes/cam_finder/classification/data/new_cameras_labels',
+    '/Users/noahmushkin/codes/cam_finder/classification/data/images/new_cameras'
 )

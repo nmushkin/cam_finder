@@ -17,8 +17,7 @@ class VocXmlDataset(Dataset):
             class_names[n]: n + 1 for n in range(len(class_names))
             }
         self.transforms = transforms
-        self.height = im_size[1]
-        self.width = im_size[0]
+        self.im_size = im_size
 
     def __getitem__(self, idx):
         xml_path = os.path.join(self.xml_dir, self.xml_files[idx])
@@ -26,19 +25,20 @@ class VocXmlDataset(Dataset):
         image_path = os.path.join(self.image_dir, sample['image'])
         image = Image.open(image_path).convert('RGB')
         boxes = sample['boxes']
-        for box in range(len(boxes)):
-            boxes[box] = resize_bbox(
-                image.height,
-                self.height,
-                image.width,
-                self.width,
-                boxes[box]
-                )
+        if self.im_size is not None:
+            for box in range(len(boxes)):
+                boxes[box] = resize_bbox(
+                    image.height,
+                    self.im_size[1],
+                    image.width,
+                    self.im_size[0],
+                    boxes[box]
+                    )
+            image = image.resize((self.im_size[0], self.im_size[1]))
         areas = []
         for box in boxes:
             areas.append((box[2] - box[0]) * (box[3] - box[1]))
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        image = image.resize((self.width, self.height))
         labels = torch.as_tensor(
             [self.class_names[c] for c in sample['labels']],
             dtype=torch.int64)

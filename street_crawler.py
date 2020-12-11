@@ -1,4 +1,4 @@
-from io import BytesIO
+from io import BytesIO, StringIO
 from time import sleep, time
 import os
 from threading import Thread
@@ -6,6 +6,7 @@ from threading import Thread
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from PIL import Image
+from requests import Session
 
 from osmnx_traverse import OsmnxTraverser
 from maps_api_utils import get_pano_url
@@ -13,19 +14,22 @@ from maps_api_utils import get_pano_url
 DRIVERS = 4
 
 
-def save_pano(save_path, lat, lon, heading, driver):
+def save_pano(save_path, lat, lon, heading, driver, session):
+    """Loads and saves a streetview image for a given location"""
+
     fname = f'{lat}_{lon}_{heading}.jpeg'
     fp = os.path.join(save_path, fname)
     if os.path.isfile(fp):
         return
-    url = get_pano_url(lat, lon, heading)
+    url = get_pano_url(lat, lon, heading, session)
     if url:
         driver.get(url)
-        # Wait for page to load fully (url changes on full load)
+        # Wait for page to load fully (url updates on full load)
         while driver.current_url == url:
-            sleep(.01)
-        screenshot = BytesIO(driver.get_screenshot_as_png())
-        screenshot = Image.open(screenshot).convert('RGB')
+           sleep(.01)
+        sleep(.5)
+        screenshot = driver.get_screenshot_as_png()
+        screenshot = Image.open(BytesIO(screenshot)).convert('RGB')
         screenshot.save(fp=fp)
     else:
         sleep(.1)
@@ -36,7 +40,7 @@ class GraphImageCrawler():
     def __init__(self, save_path):
         options = Options()
         # options.add_argument('--headless')
-        options.add_argument('--window-size=1600x1600')
+        # options.add_argument('--window-size=1600x1600')
         self.drivers = [
             webdriver.Chrome(chrome_options=options) for _ in range(DRIVERS)
         ]
@@ -53,6 +57,8 @@ class GraphImageCrawler():
         return callback
 
     def traverse_image_save(self, bbox):
+        """Generates a list of locations and gets imagery of them"""
+
         traverser = OsmnxTraverser()
         traverser.load_place_graph(bbox=bbox)
         locations = []
@@ -73,14 +79,17 @@ class GraphImageCrawler():
             t.join()
 
     def thread_save(self, location_list, driver, log=False):
+        """Per-thread function to save streetview imagery"""
+
+        session = Session()
         start_time = time()
         last_len = len(location_list)
         while location_list:
             try:
                 loc = location_list.pop()
                 lat, lon, heading = loc[0], loc[1], loc[2]
-                save_pano(self.save_path, lat, lon, (heading - 90) % 360, driver)
-                save_pano(self.save_path, lat, lon, (heading + 90) % 360, driver)
+                save_pano(self.save_path, lat, lon, (heading - 90) % 360, driver, session)
+                save_pano(self.save_path, lat, lon, (heading + 90) % 360, driver, session)
                 print(lat, lon)
             except IndexError:
                 return

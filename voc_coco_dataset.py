@@ -9,7 +9,7 @@ from PIL import Image
 class VocXmlDataset(Dataset):
     """A Pytorch Dataset for using images and annotations in VOC format"""
 
-    def __init__(self, image_dir, xml_dir, class_names, im_size, transforms=None):
+    def __init__(self, image_dir, xml_dir, class_names, im_length, transforms=None):
         self.image_dir = image_dir
         self.xml_dir = xml_dir
         self.xml_files = sorted(os.listdir(xml_dir))
@@ -17,7 +17,7 @@ class VocXmlDataset(Dataset):
             class_names[n]: n + 1 for n in range(len(class_names))
             }
         self.transforms = transforms
-        self.im_size = im_size
+        self.im_length = im_length
 
     def __getitem__(self, idx):
         xml_path = os.path.join(self.xml_dir, self.xml_files[idx])
@@ -25,16 +25,24 @@ class VocXmlDataset(Dataset):
         image_path = os.path.join(self.image_dir, sample['image'])
         image = Image.open(image_path).convert('RGB')
         boxes = sample['boxes']
-        if self.im_size is not None:
+
+        if self.im_length is not None:
+            if image.height > image.width:
+                old_length = image.height
+            else:
+                old_length = image.width
+            ratio = self.im_length / old_length
+            new_size = (round(image.width * ratio), round(image.height * ratio))
+
             for box in range(len(boxes)):
                 boxes[box] = resize_bbox(
                     image.height,
-                    self.im_size[1],
+                    new_size[1],
                     image.width,
-                    self.im_size[0],
+                    new_size[0],
                     boxes[box]
                     )
-            image = image.resize((self.im_size[0], self.im_size[1]))
+            image = image.resize((new_size[0], new_size[1]))
         areas = []
         for box in boxes:
             areas.append((box[2] - box[0]) * (box[3] - box[1]))

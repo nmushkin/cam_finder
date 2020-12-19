@@ -6,6 +6,8 @@ import PIL
 from PIL import ImageDraw
 import torchvision
 
+import matplotlib.pyplot as plt
+
 from detection_models import get_fasterrcnn_model, set_grad_required
 from voc_coco_dataset import VocXmlDataset
 import torchvision_scripts.transforms as T
@@ -21,12 +23,12 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # use our dataset and defined transformations
     dataset = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, (600, 600), get_transform(train=True)
+        IMAGE_DIR, LABEL_DIR, class_names, 3000, get_transform(train=True)
         )
     dataset_test = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, (600, 600), get_transform(train=False)
+        IMAGE_DIR, LABEL_DIR, class_names, 3000, get_transform(train=False)
     )
-    # im, target = dataset.__getitem__(100)
+    # im, target = dataset.__getitem__(169)
     # print(target)
     # plt.imshow(torchvision.transforms.ToPILImage()(im))
     # plt.show()
@@ -124,7 +126,7 @@ def draw_bbox(img, bbox, text):
 
 
 if __name__ == "__main__":
-    classes = ['fixed_cam', 'round_cam']
+    classes = ['fixed_cam', 'round_cam', 'disc_cam']
     num_classes = len(classes)
     # print('Feature Extracting')
     model = get_fasterrcnn_model(num_classes, False)

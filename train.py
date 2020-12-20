@@ -8,7 +8,7 @@ import torchvision
 
 import matplotlib.pyplot as plt
 
-from detection_models import get_fasterrcnn_model, set_grad_required
+from detection_models import get_fasterrcnn_model, set_grad_required, get_model
 from voc_coco_dataset import VocXmlDataset
 import torchvision_scripts.transforms as T
 from torchvision_scripts import utils
@@ -23,10 +23,10 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # use our dataset and defined transformations
     dataset = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, 3000, get_transform(train=True)
+        IMAGE_DIR, LABEL_DIR, class_names, 800, get_transform(train=True)
         )
     dataset_test = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, 3000, get_transform(train=False)
+        IMAGE_DIR, LABEL_DIR, class_names, 800, get_transform(train=False)
     )
     # im, target = dataset.__getitem__(169)
     # print(target)
@@ -129,10 +129,11 @@ if __name__ == "__main__":
     classes = ['fixed_cam', 'round_cam', 'disc_cam']
     num_classes = len(classes)
     # print('Feature Extracting')
-    model = get_fasterrcnn_model(num_classes, False)
+    # model = get_fasterrcnn_model(num_classes, False)
+    model = get_model(num_classes, False)
     # model = train_model(epochs=5, class_names=classes, model=model)
     print('Training On All Params')
-    set_grad_required(model, True)
+    # set_grad_required(model, True)
     # train_model saves best epoch weights
     model = train_model(epochs=20, class_names=classes, model=model)
     # torch.save(model.state_dict(), './data/resnet_50_1500_20e_nofeature.pth')

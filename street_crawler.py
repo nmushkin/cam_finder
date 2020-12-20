@@ -1,4 +1,4 @@
-from io import BytesIO, StringIO
+from io import BytesIO
 from time import sleep, time
 import os
 from threading import Thread
@@ -17,8 +17,8 @@ DRIVERS = 4
 def save_pano(save_path, lat, lon, heading, driver, session):
     """Loads and saves a streetview image for a given location"""
 
-    fname = f'{lat}_{lon}_{heading}.jpeg'
-    fp = os.path.join(save_path, fname)
+    fname1 = f'{lat}_{lon}_{heading}.jpeg'
+    fp = os.path.join(save_path, fname1)
     if os.path.isfile(fp):
         return
     url = get_pano_url(lat, lon, heading, session)
@@ -26,11 +26,11 @@ def save_pano(save_path, lat, lon, heading, driver, session):
         driver.get(url)
         # Wait for page to load fully (url updates on full load)
         while driver.current_url == url:
-           sleep(.01)
+            sleep(.01)
         sleep(.5)
         screenshot = driver.get_screenshot_as_png()
         screenshot = Image.open(BytesIO(screenshot)).convert('RGB')
-        screenshot.save(fp=fp)
+        screenshot.save(fp=fp, quality=85, subsampling=0)
     else:
         sleep(.1)
 
@@ -39,8 +39,8 @@ class GraphImageCrawler():
 
     def __init__(self, save_path):
         options = Options()
-        # options.add_argument('--headless')
-        # options.add_argument('--window-size=1600x1600')
+        options.add_argument('--headless')
+        options.add_argument('--window-size=1200x1200')
         self.drivers = [
             webdriver.Chrome(chrome_options=options) for _ in range(DRIVERS)
         ]
@@ -84,6 +84,7 @@ class GraphImageCrawler():
         session = Session()
         start_time = time()
         last_len = len(location_list)
+        start_len = last_len
         while location_list:
             try:
                 loc = location_list.pop()
@@ -96,8 +97,9 @@ class GraphImageCrawler():
 
             if log:
                 time_diff = time() - start_time
-                if time_diff >= 10:
+                if time_diff >= 20:
                     diff = last_len - len(location_list)
                     print(f'{round((time_diff) / (diff + 1))} s')
+                    print(f'{round((start_len - last_len) / start_len * 100)}%')
                     start_time = time()
                     last_len = len(location_list)

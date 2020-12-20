@@ -1,4 +1,5 @@
 import os
+import json
 
 import torch
 import torchvision
@@ -9,49 +10,81 @@ import numpy as np
 from detection_models import get_fasterrcnn_model
 
 
-def classify(model, image_folder, save_folder):
+def classify(model, image_folder, save_folder, json_save_file, device=torch.device('cuda')):
     """Classifies objects in images from image_folder
 
-       Saves annotated images in save_folder"""
+       Saves annotated images in save_folder as well as info in json_save_file"""
+
     model.eval()
-    for fname in os.listdir(image_folder):
+    cam_info = {'locations': {}}
+
+    for file_num, fname in enumerate(os.listdir(image_folder)):
         if 'jpeg' not in fname:
             continue
         prefix = fname[:fname.index('.jpeg')]
         im = Image.open(os.path.join(image_folder, fname))
-        rgb_tiles = [F.to_tensor(arr) for arr in rgb_quarter(im)]
+        rgb_tiles = [F.to_tensor(arr).to(device) for arr in image_split(im)]
         predictions = model(rgb_tiles)
-        for tile_no, tile_preds in enumerate(predictions):
-            save = False
-            image = torchvision.transforms.ToPILImage()(rgb_tiles[tile_no])
-            image = image.convert('RGB')
-            box_im = image.copy()
-            for cam_no in range(len(tile_preds['boxes'])):
-                probability = tile_preds['scores'][cam_no].item()
-                if probability >= .8:
-                    save = True
-                    print(probability, prefix)
-                    boxes = tile_preds['boxes'][cam_no].tolist()
-                    box_im = draw_bbox(box_im, boxes, probability)
-            if save:
-                fname = f'{prefix}-{tile_no}'
-                image.save(fp=(f'{os.path.join(save_folder, fname)}.jpeg'))
+        location = prefix.split('_')
+        current_json = {'lat': float(location[0]), 'lng': float(location[1]),
+                        'heading': float(location[2]), 'tiles': []}
+        for tile_num, tile_preds in enumerate(predictions):
+            tile_image = torchvision.transforms.ToPILImage()(rgb_tiles[tile_num])
+            im, box_im, tile_info = get_tile_info(tile_num, tile_preds, tile_image)
+            if tile_info['cameras']:
+                fname = f'{prefix}-{tile_num}'
+                im.save(fp=(f'{os.path.join(save_folder, fname)}.jpeg'),
+                        quality=95, subsampling=0)
                 box_fname = f'{fname}-box'
                 box_im.save(
                     fp=(f'{os.path.join(save_folder, box_fname)}.jpeg')
                 )
+                tile_info['image'] = f'{box_fname}.jpeg'
+                current_json['tiles'].append(tile_info)
+
+        if current_json['tiles']:
+            loc_hash = f'{current_json["lat"]}_{current_json["lng"]}'
+            if loc_hash not in cam_info['locations']:
+                cam_info['locations'][loc_hash] = {
+                    'lat': current_json['lat'],
+                    'lng': current_json['lng'],
+                    'headings': {}
+                }
+            cam_info['locations'][loc_hash]['headings'][current_json['heading']] = current_json['tiles']
+
+        if file_num % 10 == 0:
+            with open(json_save_file, 'w') as json_f:
+                json.dump(cam_info, json_f)
+
+    with open(json_save_file, 'w') as json_f:
+        json.dump(cam_info, json_f)
 
 
-def rgb_quarter(image):
-    """Splits a PIL image into quarters each 800x800
+def get_tile_info(tile_num, tile_preds, tile_image):
+    im = tile_image.convert('RGB')
+    box_im = im.copy()
+    tile_info = {'cameras': []}
+    for cam_no in range(len(tile_preds['boxes'])):
+        probability = tile_preds['scores'][cam_no].item()
+        if probability >= .2:
+            label = tile_preds['labels'][cam_no].item()
+            boxes = tile_preds['boxes'][cam_no].tolist()
+            box_im = draw_bbox(box_im, boxes, probability)
+            tile_info['cameras'].append([label, probability, boxes])
+
+    return im, box_im, tile_info
+
+
+def image_split(image):
+    """Splits a PIL image into tiles each 800x800
 
        Returns a list of numpy arrays representing each quarter"""
 
-    img = image.resize((1600, 1600))
+    img = image.resize((2400, 2400))
     img_rgb = np.array(img.convert('RGB'))
-    y_num = img_rgb.shape[1] // 2
-    x_num = img_rgb.shape[0] // 2
-    indices = [(x, y) for x in range(0, 2) for y in range(0, 2)]
+    y_num = img_rgb.shape[1] // 3
+    x_num = img_rgb.shape[0] // 3
+    indices = [(x, y) for x in range(0, 3) for y in range(0, 3)]
     rgb_tiles = [
         img_rgb[x*x_num: (x+1)*x_num, y*y_num: (y+1)*y_num] for x, y in indices
     ]
@@ -67,11 +100,13 @@ def draw_bbox(img, bbox, prob):
     return img
 
 
-weights = './data/models/resnet_50_b2_10e.pth'
-image_folder = './data/walk_pics'
-to_folder = './data/images/new_cameras_predictions'
+weights = './data/models/resnet_50_1500_nofeature.pth'
+image_folder = './data/walk_test'
+to_folder = './data/images/new_cam_predictions'
+json_save_file = './data/test_json.json'
 model = get_fasterrcnn_model(2, False)
 state = torch.load(weights)
 model.load_state_dict(state)
 model.to(torch.device('cpu'))
-classify(model, image_folder, to_folder)
+
+classify(model, image_folder, to_folder, json_save_file, torch.device('cpu'))

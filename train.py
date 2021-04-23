@@ -15,7 +15,7 @@ from torchvision_scripts import utils
 from torchvision_scripts.engine import evaluate
 
 IMAGE_DIR = './data/images/new_cameras/'
-LABEL_DIR = './data/new_cameras_labels/'
+LABEL_DIR = './data/all_round_labels/'
 
 
 def train_model(class_names, model, feature_extract_only=True, epochs=10):

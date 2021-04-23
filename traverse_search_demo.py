@@ -9,6 +9,8 @@ from street_crawler import GraphImageCrawler
 # Upper east side: [40.77611, 40.790277, -73.966121, -73.944307]
 # Cambridge Area / MIT: [42.371581, 42.356125, -71.116863, -71.076471]
 # Boston Financial District: [42.356207, 42.368895, -71.072855, -71.047126]
+# London Elephant and Castle: [51.508858, 51.483893, -0.120589, -0.072454]
+# Moscow Centre: [55.701169, 55.798663, 37.520705, 37.704555]
 
 
 # BFS Traversal Visualization Demo:
@@ -23,7 +25,7 @@ from street_crawler import GraphImageCrawler
 
 # traverser = OsmnxTraverser()
 # traverser.load_place_graph(
-#     bbox=[42.356207, 42.368895, -71.072855, -71.047126],
+#     bbox=[55.5685, 55.9192, 37.3511, 37.8606],
 #     simple=True
 # )
 # traverser.bfs_walk(20, print_latlon)
@@ -47,9 +49,9 @@ from street_crawler import GraphImageCrawler
 
 # Image Save Demo:
 
-SAVE_PATH = './data/images/walk_pics/boston_financial'
+SAVE_PATH = './data/images/walk_pics/moscow'
 
 grapher = GraphImageCrawler(save_path=SAVE_PATH)
 grapher.traverse_image_save(
-    bbox=[42.356207, 42.368895, -71.072855, -71.047126]
+    bbox=[55.701169, 55.798663, 37.520705, 37.704555]
 )

@@ -22,12 +22,12 @@ def save_pano(save_path, lat, lon, heading, driver, session):
     if os.path.isfile(fp):
         return
     url = get_pano_url(lat, lon, heading, session)
-    if url:
+    if url is not None:
         driver.get(url)
         # Wait for page to load fully (url updates on full load)
         while driver.current_url == url:
             sleep(.01)
-        sleep(.5)
+        sleep(1)
         screenshot = driver.get_screenshot_as_png()
         screenshot = Image.open(BytesIO(screenshot)).convert('RGB')
         screenshot.save(fp=fp, quality=85, subsampling=0)

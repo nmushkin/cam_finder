@@ -23,7 +23,8 @@ def classify(model, image_folder, save_folder, json_save_file, device=torch.devi
             continue
         prefix = fname[:fname.index('.jpeg')]
         im = Image.open(os.path.join(image_folder, fname))
-        rgb_tiles = [F.to_tensor(arr).to(device) for arr in image_split(im)]
+        # rgb_tiles = [F.to_tensor(arr).to(device) for arr in image_split(im)]
+        rgb_tiles = [F.to_tensor(im)]
         predictions = model(rgb_tiles)
         location = prefix.split('_')
         current_json = {'lat': float(location[0]), 'lng': float(location[1]),
@@ -33,8 +34,8 @@ def classify(model, image_folder, save_folder, json_save_file, device=torch.devi
             im, box_im, tile_info = get_tile_info(tile_num, tile_preds, tile_image)
             if tile_info['cameras']:
                 fname = f'{prefix}-{tile_num}'
-                im.save(fp=(f'{os.path.join(save_folder, fname)}.jpeg'),
-                        quality=95, subsampling=0)
+                # im.save(fp=(f'{os.path.join(save_folder, fname)}.jpeg'),
+                #         quality=95, subsampling=0)
                 box_fname = f'{fname}-box'
                 box_im.save(
                     fp=(f'{os.path.join(save_folder, box_fname)}.jpeg')
@@ -69,7 +70,7 @@ def get_tile_info(tile_num, tile_preds, tile_image):
         if probability >= .2:
             label = tile_preds['labels'][cam_no].item()
             boxes = tile_preds['boxes'][cam_no].tolist()
-            box_im = draw_bbox(box_im, boxes, probability)
+            box_im = draw_bbox(box_im, boxes, probability, label)
             tile_info['cameras'].append([label, probability, boxes])
 
     return im, box_im, tile_info
@@ -91,18 +92,19 @@ def image_split(image):
     return rgb_tiles
 
 
-def draw_bbox(img, bbox, prob):
+def draw_bbox(img, bbox, prob, label):
     """Draws a bounding box and probability in an image"""
 
     draw = ImageDraw.Draw(img)
     draw.rectangle(bbox, outline=(3, 252, 57))
     draw.text(xy=bbox[0:2], text=str(int(prob*100)))
+    draw.text(xy=[bbox[0], bbox[1]+10], text=str(label))
     return img
 
 
-weights = './data/models/resnet_50_1500_nofeature.pth'
+weights = 'resnet_04_21_2021_nofeature.pth'
 image_folder = './data/walk_test'
-to_folder = './data/images/new_cam_predictions'
+to_folder = './data/walk_test'
 json_save_file = './data/test_json.json'
 model = get_fasterrcnn_model(2, False)
 state = torch.load(weights)

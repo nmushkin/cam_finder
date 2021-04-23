@@ -27,7 +27,9 @@ def pano_exists(lat, lon, heading, pitch=0, session=None):
 
 def get_pano_url(lat, lon, heading, session):
     """Returns a street view url for the specified location"""
-
-    if not pano_exists(lat, lon, heading, session):
-        return
-    return f'{PANO_BASE_URL}&viewpoint={lat},{lon}&heading={heading}&pitch=0&fov=90'
+    try:
+        if not pano_exists(lat, lon, heading, session):
+            return None
+        return f'{PANO_BASE_URL}&viewpoint={lat},{lon}&heading={heading}&pitch=0&fov=90'
+    except requests.exceptions.SSLError:
+        return None

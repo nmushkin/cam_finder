@@ -105,7 +105,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
 
     if lowest_loss is None or total_loss < lowest_loss:
         model.cpu()
-        torch.save(model.state_dict(), './data/resnet_50_1500_nofeature.pth')
+        torch.save(model.state_dict(), './resnet_50_1500_nofeature.pth')
         model.to(device)
         lowest_loss = total_loss
 
@@ -126,13 +126,12 @@ def draw_bbox(img, bbox, text):
 
 
 if __name__ == "__main__":
-    classes = ['fixed_cam', 'round_cam', 'disc_cam']
+    classes = ['fixed_cam', 'round_cam']
     num_classes = len(classes)
     # print('Feature Extracting')
-    # model = get_fasterrcnn_model(num_classes, False)
-    model = get_model(num_classes, False)
-    # model = train_model(epochs=5, class_names=classes, model=model)
-    print('Training On All Params')
+    model = get_fasterrcnn_model(num_classes, False)
+    # model = get_model(num_classes, False)
+    # print('Training On All Params')
     # set_grad_required(model, True)
     # train_model saves best epoch weights
     model = train_model(epochs=20, class_names=classes, model=model)

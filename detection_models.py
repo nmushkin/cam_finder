@@ -2,14 +2,17 @@
 
 from torchvision.models.detection import fasterrcnn_resnet50_fpn, FasterRCNN
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-
+from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 import torch
 
 
 def get_fasterrcnn_model(num_classes, feature_extract_only=False):
-    model = fasterrcnn_resnet50_fpn(pretrained=True)
+
+    anchor_gen = AnchorGenerator(sizes=((16, 32, 64, 128, 256), ))
+    model = fasterrcnn_resnet50_fpn(pretrained=True,
+                                    rpn_anchor_generator=anchor_gen)
     if feature_extract_only:
         set_grad_required(model, not feature_extract_only)
     # get number of input features for the classifier
@@ -19,6 +22,8 @@ def get_fasterrcnn_model(num_classes, feature_extract_only=False):
         in_features,
         num_classes + 1  # +1 for background class
     )
+
+    model.roi_heads
 
     return model
 

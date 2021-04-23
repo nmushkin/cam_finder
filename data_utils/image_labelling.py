@@ -1,6 +1,7 @@
 import os
 import json
 import xml.etree.ElementTree as etree
+import math
 
 from PIL import Image
 
@@ -26,6 +27,65 @@ def png_to_jpeg(xml_label_folder, image_folder):
             root.find('path').text = image_path.replace('.png', '.jpeg')
             os.remove(im_path)
             xml.write(xml_path)
+
+
+# def round_cam_labels(xml_label_folder, new_xml_label_folder):
+#     """Changes labels in VOC xml"""
+#     xml_files = os.listdir(xml_label_folder)
+#     for file_name in xml_files:
+#         xml_path = os.path.join(xml_label_folder, file_name)
+#         xml = etree.parse(xml_path)
+#         root = xml.getroot()
+#         for obj in root.findall('object'):
+#             if obj.find('name').text == 'disc_cam':
+#                 obj.find('name').text = 'round_cam'
+#         new_path = os.path.join(new_xml_label_folder, file_name)
+#         xml.write(new_path)
+
+def increase_box_size(xml_label_folder, new_xml_folder, pct_increase):
+    """Increases bbox size in VOC xml"""
+    xml_files = os.listdir(xml_label_folder)
+    for file_name in xml_files:
+        xml_path = os.path.join(xml_label_folder, file_name)
+        xml = etree.parse(xml_path)
+        root = xml.getroot()
+        size = root.find('size')
+        im_width = int(size.find('width').text)
+        im_height = int(size.find('height').text)
+
+        for obj in root.findall('object'):
+            bbox = obj.find('bndbox')
+            xmin = int(bbox.find('xmin').text)
+            ymin = int(bbox.find('ymin').text)
+            xmax = int(bbox.find('xmax').text)
+            ymax = int(bbox.find('ymax').text)
+            width_add = math.floor((xmax - xmin) * pct_increase / 100)
+            height_add = math.floor((ymax - ymin) * pct_increase / 100)
+
+            bbox.find('xmin').text = str(max(0, xmin - width_add))
+            bbox.find('ymin').text = str(max(0, ymin - height_add))
+            bbox.find('xmax').text = str(min(im_width - 1, xmax + width_add))
+            bbox.find('ymax').text = str(min(im_height - 1, ymax + height_add))
+
+        new_path = os.path.join(new_xml_folder, file_name)
+        xml.write(new_path)
+
+
+def round_cam_labels(xml_label_folder):
+    """Changes labels in VOC xml"""
+    xml_files = os.listdir(xml_label_folder)
+    for file_name in xml_files:
+        xml_path = os.path.join(xml_label_folder, file_name)
+        try:
+            xml = etree.parse(xml_path)
+            root = xml.getroot()
+            if len(root.findall('object')) == 0:
+                print('hey')
+                print(xml_path)
+        except Exception:
+            print(file_name)
+        # new_path = os.path.join(new_xml_label_folder, file_name)
+        # xml.write(new_path)
 
 
 def delete_unused_images(xml_dir, im_dir):
@@ -98,6 +158,24 @@ def threshhold():
         #     pass
 
 
+def image_filter(reference_dir, source_dir, dest_dir):
+    os.makedirs(dest_dir, exist_ok=True)
+    name_set = set()
+    for f in set(os.listdir(reference_dir)):
+        if 'jpeg' not in f:
+            continue
+        base_name = f[:f.index('-box')]
+        name_set.add(base_name)
+    for f in set(os.listdir(source_dir)):
+        if 'jpeg' not in f:
+            continue
+        base_name = f[:f.index('-')]
+        if base_name in name_set:
+            old_path = os.path.join(source_dir, f)
+            new_path = os.path.join(dest_dir, f)
+            os.rename(old_path, new_path)
+
+
 # threshhold()
 
 # png_to_jpeg(
@@ -105,10 +183,27 @@ def threshhold():
 #     '/Users/noahmushkin/codes/cam_finder/data/images/new_cameras'
 # )
 
-delete_unused_images(
-    '/Users/noahmushkin/codes/cam_finder/classification/data/new_cameras_labels',
-    '/Users/noahmushkin/codes/cam_finder/classification/data/images/new_cameras'
+# delete_unused_images(
+#     '/Users/noahmushkin/codes/cam_finder/classification/data/new_cameras_labels',
+#     '/Users/noahmushkin/codes/cam_finder/classification/data/images/new_cameras'
+# )
+
+# round_cam_labels(
+#     '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels'
+#     # '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels'
+# )
+
+increase_box_size(
+    '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels',
+    '/Users/noahmushkin/codes/cam_finder/classification/data/bigger_round_labels',
+    40
 )
+
+# image_filter(
+#     '/Users/noahmushkin/Desktop/more_cams',
+#     '/Users/noahmushkin/Desktop/processed_pics',
+#     '/Users/noahmushkin/Desktop/split_pics'
+# )
 
 # delete_unused_xml(
 #     '/Users/noahmushkin/codes/cam_finder/classification/data/new_cameras_labels',

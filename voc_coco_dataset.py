@@ -13,6 +13,7 @@ class VocXmlDataset(Dataset):
         self.image_dir = image_dir
         self.xml_dir = xml_dir
         self.xml_files = sorted(os.listdir(xml_dir))
+        self.xml_files = [f for f in self.xml_files if '.xml' in f]
         self.class_names = {
             class_names[n]: n + 1 for n in range(len(class_names))
             }

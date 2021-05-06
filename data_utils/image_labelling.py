@@ -71,6 +71,41 @@ def increase_box_size(xml_label_folder, new_xml_folder, pct_increase):
         xml.write(new_path)
 
 
+def bbox_size_stats(xml_label_folder):
+    """Increases bbox size in VOC xml"""
+    xml_files = os.listdir(xml_label_folder)
+    heights = []
+    widths = []
+    ratios = []
+    for file_name in xml_files:
+        xml_path = os.path.join(xml_label_folder, file_name)
+        xml = etree.parse(xml_path)
+        root = xml.getroot()
+
+        for obj in root.findall('object'):
+            bbox = obj.find('bndbox')
+            xmin = int(bbox.find('xmin').text)
+            ymin = int(bbox.find('ymin').text)
+            xmax = int(bbox.find('xmax').text)
+            ymax = int(bbox.find('ymax').text)
+
+            widths.append(xmax - xmin)
+            heights.append(ymax - ymin)
+            ratios.append((ymax - ymin) / (xmax - xmin))
+
+    heights.sort()
+    widths.sort()
+    print(sum(heights) / len(heights))
+    print(sum(widths) / len(widths))
+    print(sum(ratios) / len(ratios))
+    print(min(heights))
+    print(min(widths))
+    print(max(heights))
+    print(max(widths))
+    print(heights)
+    print(widths)
+
+
 def round_cam_labels(xml_label_folder):
     """Changes labels in VOC xml"""
     xml_files = os.listdir(xml_label_folder)
@@ -193,10 +228,14 @@ def image_filter(reference_dir, source_dir, dest_dir):
 #     # '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels'
 # )
 
-increase_box_size(
+# increase_box_size(
+#     '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels',
+#     '/Users/noahmushkin/codes/cam_finder/classification/data/bigger_round_labels',
+#     40
+# )
+
+bbox_size_stats(
     '/Users/noahmushkin/codes/cam_finder/classification/data/all_round_labels',
-    '/Users/noahmushkin/codes/cam_finder/classification/data/bigger_round_labels',
-    40
 )
 
 # image_filter(

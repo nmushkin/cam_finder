@@ -23,10 +23,10 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # use our dataset and defined transformations
     dataset = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, 800, get_transform(train=True)
+        IMAGE_DIR, LABEL_DIR, class_names, None, get_transform(train=True)
         )
     dataset_test = VocXmlDataset(
-        IMAGE_DIR, LABEL_DIR, class_names, 800, get_transform(train=False)
+        IMAGE_DIR, LABEL_DIR, class_names, None, get_transform(train=False)
     )
     # im, target = dataset.__getitem__(169)
     # print(target)
@@ -51,18 +51,19 @@ def train_model(class_names, model, feature_extract_only=True, epochs=10):
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     print(f'{len(params)} Params To Train')
-    optimizer = torch.optim.SGD(params, lr=0.005,
-                                momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=0.0005,
+                                momentum=0.7, weight_decay=0.0005)
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=2,
-                                                   gamma=0.05)
+                                                   step_size=4,
+                                                   gamma=0.5)
 
     for epoch in range(epochs):
         # train for one epoch
         train_one_epoch(model, optimizer, data_loader, device, epoch)
         # update the learning rate
         lr_scheduler.step()
+        print(f'Learning rate is {lr_scheduler.get_last_lr}')
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 

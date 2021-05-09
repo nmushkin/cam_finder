@@ -51,8 +51,28 @@ def set_grad_required(model, grad_required):
 
 
 def get_model(num_classes, features_only=False):
-    backbone = resnet_fpn_backbone('resnet18', True, trainable_layers=1)
+    backbone = resnet_fpn_backbone('resnet18', True, trainable_layers=3)
     model = FasterRCNN(backbone, num_classes)
+    anchor_sizes = ((16,), (32,), (64,), (128,), (256,))
+    aspect_ratios = ((0.5, 1.0, 2.0),) * len(anchor_sizes)
+    anchor_gen = AnchorGenerator(sizes=anchor_sizes,
+                                 aspect_ratios=aspect_ratios)
+    print(anchor_gen.num_anchors_per_location()[0])
+    rpn_head = RPNHead(256, anchor_gen.num_anchors_per_location()[0])
+
+    rpn_pre_nms_top_n = dict(training=2000, testing=1000)
+    rpn_post_nms_top_n = dict(training=2000, testing=1000)
+    model.rpn = RegionProposalNetwork(
+        anchor_generator=anchor_gen,
+        head=rpn_head,
+        fg_iou_thresh=0.8,
+        bg_iou_thresh=0.2,
+        batch_size_per_image=256,
+        positive_fraction=0.5,
+        pre_nms_top_n=rpn_pre_nms_top_n,
+        post_nms_top_n=rpn_post_nms_top_n,
+        nms_thresh=0.7
+    )
     # get number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # replace the pre-trained head with a new one

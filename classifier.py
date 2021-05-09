@@ -102,13 +102,13 @@ def draw_bbox(img, bbox, prob, label):
     return img
 
 
-weights = 'resnet_50_lr_0005_04_23_2021.pth'
+weights = 'resnet_50_05_06_2021.pth'
 image_folder = './data/walk_test'
 to_folder = './data/walk_test'
 json_save_file = './data/test_json.json'
 model = get_fasterrcnn_model(2, False)
-# state = torch.load(weights)
-# model.load_state_dict(state)
+state = torch.load(weights)
+model.load_state_dict(state)
 model.to(torch.device('cpu'))
 
 classify(model, image_folder, to_folder, json_save_file, torch.device('cpu'))

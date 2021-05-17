@@ -44,23 +44,28 @@ class VocXmlDataset(Dataset):
                     boxes[box]
                     )
             image = image.resize((new_size[0], new_size[1]))
-        areas = []
-        for box in boxes:
-            areas.append((box[2] - box[0]) * (box[3] - box[1]))
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        labels = torch.as_tensor(
-            [self.class_names[c] for c in sample['labels']],
-            dtype=torch.int64)
-        image_id = torch.as_tensor([idx], dtype=torch.int64)
-        areas = torch.as_tensor(areas, dtype=torch.float32)
-        is_crowd = torch.zeros((len(sample['boxes']),), dtype=torch.int64)
 
-        target = {}
-        target['boxes'] = boxes
-        target['labels'] = labels
-        target['image_id'] = image_id
-        target['area'] = areas
-        target['iscrowd'] = is_crowd
+        image_id = torch.as_tensor([idx], dtype=torch.int64)
+        if len(boxes) <= 0:
+            target = get_negative_target(image_id)
+
+        else:
+            areas = []
+            for box in boxes:
+                areas.append((box[2] - box[0]) * (box[3] - box[1]))
+            boxes = torch.as_tensor(boxes, dtype=torch.float32)
+            labels = torch.as_tensor(
+                [self.class_names[c] for c in sample['labels']],
+                dtype=torch.int64)
+            areas = torch.as_tensor(areas, dtype=torch.float32)
+            is_crowd = torch.zeros((len(sample['boxes']),), dtype=torch.int64)
+
+            target = {}
+            target['boxes'] = boxes
+            target['labels'] = labels
+            target['image_id'] = image_id
+            target['area'] = areas
+            target['iscrowd'] = is_crowd
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
@@ -69,6 +74,18 @@ class VocXmlDataset(Dataset):
 
     def __len__(self):
         return len(self.xml_files)
+
+
+def get_negative_target(image_id):
+    target = {}
+    boxes = torch.zeros((0, 4), dtype=torch.float32)
+    target["boxes"] = boxes
+    target["labels"] = torch.zeros((0, 1), dtype=torch.int64)
+    target["image_id"] = image_id
+    target["area"] = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+    target["iscrowd"] = torch.zeros((0,), dtype=torch.int64)
+
+    return target
 
 
 def voc_xml_to_dict(xml_path):

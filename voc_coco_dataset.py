@@ -80,10 +80,10 @@ def get_negative_target(image_id):
     target = {}
     boxes = torch.zeros((0, 4), dtype=torch.float32)
     target["boxes"] = boxes
-    target["labels"] = torch.zeros((0, 1), dtype=torch.int64)
+    target["labels"] = torch.zeros((0, ), dtype=torch.int64)
     target["image_id"] = image_id
     target["area"] = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-    target["iscrowd"] = torch.zeros((0,), dtype=torch.int64)
+    target["iscrowd"] = torch.zeros((0, ), dtype=torch.int64)
 
     return target
 
